@@ -1,0 +1,14 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  AwsBillingNortificationLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: provided
+      Handler: bootstrap
+      CodeUri: target/rust.zip
+      Timeout: 10
+      MemorySize: 256
+      Environment:
+        Variables:
+          RUST_BACKTRACE: 1
