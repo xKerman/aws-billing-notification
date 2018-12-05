@@ -5,10 +5,13 @@ extern crate serde_derive;
 #[macro_use]
 extern crate log;
 extern crate simple_logger;
-
-use lambda::error::HandlerError;
+extern crate rusoto_core;
 
 use std::error::Error;
+
+use lambda::error::HandlerError;
+use rusoto_core::Region;
+use rusoto_cloudwatch::CloudWatchClient;
 
 #[derive(Deserialize, Clone)]
 struct CustomEvent {
@@ -30,6 +33,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 
 fn my_handler(e: CustomEvent, c: lambda::Context) -> Result<CustomOutput, HandlerError> {
+    let client = CloudWatchClient::new(Region::UsEast1);
     if e.first_name == "" {
         error!("Empty first name in request {}", c.aws_request_id);
         return Err(c.new_error("Empty first name"));
