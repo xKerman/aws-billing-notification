@@ -36,6 +36,19 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 
 fn my_handler(e: CustomEvent, c: lambda::Context) -> Result<CustomOutput, HandlerError> {
+    let total = get_total_cost(&c)?;
+    if e.first_name == "" {
+        error!("Empty first name in request {}", c.aws_request_id);
+        return Err(c.new_error("Empty first name"));
+    }
+
+    Ok(CustomOutput {
+        message: format!("Hello, {}!", e.first_name),
+        total: total,
+    })
+}
+
+fn get_total_cost(c: &lambda::Context) -> Result<f64, HandlerError> {
     let duration = Duration::days(1);
     let end_time = Utc::now();
     let start_time = end_time - duration;
@@ -54,22 +67,14 @@ fn my_handler(e: CustomEvent, c: lambda::Context) -> Result<CustomOutput, Handle
         extended_statistics: None,
         unit: None,
     });
-    let total = match metric.sync() {
-        Err(err) => return Err(c.new_error(&err.to_string())),
-        Ok(metric) => metric.datapoints.map(|dp| {
+
+    match metric.sync() {
+        Err(err) => Err(c.new_error(&err.to_string())),
+        Ok(metric) => Ok(metric.datapoints.map(|dp| {
             if dp.is_empty() {
                 return 0.0;
             }
             return dp[0].maximum.unwrap_or(0.0);
-        }).unwrap_or(0.0),
-    };
-    if e.first_name == "" {
-        error!("Empty first name in request {}", c.aws_request_id);
-        return Err(c.new_error("Empty first name"));
+        }).unwrap_or(0.0)),
     }
-
-    Ok(CustomOutput {
-        message: format!("Hello, {}!", e.first_name),
-        total: total,
-    })
 }
