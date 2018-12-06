@@ -32,6 +32,7 @@ dependencies = [
 name = "aws-billing-notification"
 version = "0.1.0"
 dependencies = [
+ "chrono 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "lambda_runtime 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusoto_cloudwatch 0.35.0 (registry+https://github.com/rust-lang/crates.io-index)",
