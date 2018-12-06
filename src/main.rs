@@ -13,7 +13,12 @@ use std::error::Error;
 use chrono::{Duration, SecondsFormat, Utc};
 use lambda::error::HandlerError;
 use rusoto_core::Region;
-use rusoto_cloudwatch::{CloudWatch, CloudWatchClient, Dimension, GetMetricStatisticsInput};
+use rusoto_cloudwatch::{
+    CloudWatch,
+    CloudWatchClient,
+    Dimension,
+    GetMetricStatisticsInput,
+};
 
 #[derive(Deserialize, Clone)]
 struct CustomEvent {
@@ -27,6 +32,46 @@ struct CustomOutput {
     total: f64,
 }
 
+struct CloudWatchFacade {
+    client: CloudWatchClient,
+}
+
+impl CloudWatchFacade {
+    fn new(client: CloudWatchClient) -> Self {
+        CloudWatchFacade { client }
+    }
+
+    fn get_total_cost(&self, c: &lambda::Context) -> Result<f64, HandlerError> {
+        let duration = Duration::days(1);
+        let end_time = Utc::now();
+        let start_time = end_time - duration;
+        let metric = self.client.get_metric_statistics(GetMetricStatisticsInput {
+            dimensions: Some(vec![Dimension {
+                name: "Currency".to_string(),
+                value: "USD".to_string(),
+            }]),
+            metric_name: "EstimatedCharges".to_string(),
+            namespace: "AWS/Billing".to_string(),
+            statistics: Some(vec!["Maximum".to_string()]),
+            start_time: start_time.to_rfc3339_opts(SecondsFormat::Secs, true),
+            end_time: end_time.to_rfc3339_opts(SecondsFormat::Secs, true),
+            period: duration.num_seconds(),
+            extended_statistics: None,
+            unit: None,
+        });
+
+        match metric.sync() {
+            Err(err) => Err(c.new_error(&err.to_string())),
+            Ok(metric) => Ok(metric.datapoints.map(|dp| {
+                if dp.is_empty() {
+                    return 0.0;
+                }
+                return dp[0].maximum.unwrap_or(0.0);
+            }).unwrap_or(0.0)),
+        }
+    }
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     simple_logger::init_with_level(log::Level::Info)?;
     lambda!(my_handler);
@@ -36,7 +81,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 
 fn my_handler(e: CustomEvent, c: lambda::Context) -> Result<CustomOutput, HandlerError> {
-    let total = get_total_cost(&c)?;
+    let client = CloudWatchFacade::new(CloudWatchClient::new(Region::UsEast1));
+    let total = client.get_total_cost(&c)?;
     if e.first_name == "" {
         error!("Empty first name in request {}", c.aws_request_id);
         return Err(c.new_error("Empty first name"));
@@ -46,35 +92,4 @@ fn my_handler(e: CustomEvent, c: lambda::Context) -> Result<CustomOutput, Handle
         message: format!("Hello, {}!", e.first_name),
         total: total,
     })
-}
-
-fn get_total_cost(c: &lambda::Context) -> Result<f64, HandlerError> {
-    let duration = Duration::days(1);
-    let end_time = Utc::now();
-    let start_time = end_time - duration;
-    let client = CloudWatchClient::new(Region::UsEast1);
-    let metric = client.get_metric_statistics(GetMetricStatisticsInput {
-        dimensions: Some(vec![Dimension {
-            name: "Currency".to_string(),
-            value: "USD".to_string(),
-        }]),
-        metric_name: "EstimatedCharges".to_string(),
-        namespace: "AWS/Billing".to_string(),
-        statistics: Some(vec!["Maximum".to_string()]),
-        start_time: start_time.to_rfc3339_opts(SecondsFormat::Secs, true),
-        end_time: end_time.to_rfc3339_opts(SecondsFormat::Secs, true),
-        period: duration.num_seconds(),
-        extended_statistics: None,
-        unit: None,
-    });
-
-    match metric.sync() {
-        Err(err) => Err(c.new_error(&err.to_string())),
-        Ok(metric) => Ok(metric.datapoints.map(|dp| {
-            if dp.is_empty() {
-                return 0.0;
-            }
-            return dp[0].maximum.unwrap_or(0.0);
-        }).unwrap_or(0.0)),
-    }
 }
