@@ -1,5 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
+Parameters:
+  SlackWebhookUrl:
+    Type: String
+    Description: Incoming Webhook URL
 Resources:
   AwsBillingNotificationLambda:
     Type: AWS::Serverless::Function
@@ -14,6 +18,7 @@ Resources:
       Environment:
         Variables:
           RUST_BACKTRACE: 1
+          SLACK_WEBHOOK_URL: !Ref SlackWebhookUrl
   AwsBillingNotificationIamRole:
     Type: AWS::IAM::Role
     Properties:

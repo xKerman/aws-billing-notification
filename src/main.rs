@@ -7,7 +7,10 @@ extern crate log;
 extern crate simple_logger;
 extern crate rusoto_core;
 extern crate chrono;
+extern crate slack_hook;
+extern crate openssl_probe;
 
+use std::env;
 use std::error::Error;
 
 use chrono::{Duration, SecondsFormat, Utc};
@@ -19,6 +22,7 @@ use rusoto_cloudwatch::{
     Dimension,
     GetMetricStatisticsInput,
 };
+use slack_hook::{Slack, PayloadBuilder};
 
 #[derive(Deserialize, Clone)]
 struct CustomEvent {
@@ -73,6 +77,7 @@ impl CloudWatchFacade {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    openssl_probe::init_ssl_cert_env_vars();
     simple_logger::init_with_level(log::Level::Info)?;
     lambda!(my_handler);
 
@@ -83,6 +88,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn my_handler(e: CustomEvent, c: lambda::Context) -> Result<CustomOutput, HandlerError> {
     let client = CloudWatchFacade::new(CloudWatchClient::new(Region::UsEast1));
     let total = client.get_total_cost(&c)?;
+    send_to_slack(&c, total)?;
     if e.first_name == "" {
         error!("Empty first name in request {}", c.aws_request_id);
         return Err(c.new_error("Empty first name"));
@@ -92,4 +98,24 @@ fn my_handler(e: CustomEvent, c: lambda::Context) -> Result<CustomOutput, Handle
         message: format!("Hello, {}!", e.first_name),
         total: total,
     })
+}
+
+fn send_to_slack(c: &lambda::Context, total: f64) -> Result<(), HandlerError> {
+    let webhook_url = match env::var("SLACK_WEBHOOK_URL") {
+        Ok(url) => url,
+        Err(err) => return Err(c.new_error(err.description())),
+    };
+    let slack = Slack::new(webhook_url.as_str()).unwrap();
+    let payload = PayloadBuilder::new()
+        .username("AWS Billing Notification")
+        .icon_emoji(":money_with_wings:")
+        .text(format!("今月の請求額は ${} です", total))
+        .build()
+        .unwrap();
+    let res = slack.send(&payload);
+
+    match res {
+        Ok(_) => Ok(()),
+        Err(err) => Err(c.new_error(err.description())),
+    }
 }

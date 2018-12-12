@@ -1,7 +1,7 @@
 AWS_REGION := us-east-1
 AWS_CLOUDFORMATION_STACK_NAME := BillingNotificationStack
 AWS_S3_BUCKET := # pass from command line
-
+SLACK_WEBHOOK_URL := # pass from command line
 
 # see: https://postd.cc/auto-documented-makefile/
 .PHONY: help
@@ -40,4 +40,5 @@ deploy: .output.yml target/rust.zip ## deploy code to AWS Lambda
 	aws cloudformation deploy \
 		--template-file .output.yml \
 		--stack-name $(AWS_CLOUDFORMATION_STACK_NAME) \
-		--capabilities CAPABILITY_IAM
+		--capabilities CAPABILITY_IAM \
+		--parameter-overrides SlackWebhookUrl=$(SLACK_WEBHOOK_URL)
