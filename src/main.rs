@@ -2,7 +2,6 @@
 extern crate lambda_runtime as lambda;
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
 extern crate log;
 extern crate simple_logger;
 extern crate rusoto_core;
@@ -28,14 +27,10 @@ use slack_hook::{Slack, PayloadBuilder};
 
 #[derive(Deserialize, Clone)]
 struct CustomEvent {
-    #[serde(rename = "firstName")]
-    first_name: String,
 }
 
 #[derive(Serialize, Clone)]
 struct CustomOutput {
-    message: String,
-    total: f64,
 }
 
 struct CloudWatchFacade {
@@ -87,19 +82,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 
-fn my_handler(e: CustomEvent, c: lambda::Context) -> Result<CustomOutput, HandlerError> {
+fn my_handler(_e: CustomEvent, c: lambda::Context) -> Result<CustomOutput, HandlerError> {
     let client = CloudWatchFacade::new(CloudWatchClient::new(Region::UsEast1));
     let total = client.get_total_cost(&c)?;
     send_to_slack(&c, total)?;
-    if e.first_name == "" {
-        error!("Empty first name in request {}", c.aws_request_id);
-        return Err(c.new_error("Empty first name"));
-    }
 
-    Ok(CustomOutput {
-        message: format!("Hello, {}!", e.first_name),
-        total: total,
-    })
+    Ok(CustomOutput {})
 }
 
 fn send_to_slack(c: &lambda::Context, total: f64) -> Result<(), HandlerError> {
