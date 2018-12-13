@@ -1,19 +1,9 @@
-#[macro_use]
-extern crate lambda_runtime as lambda;
-#[macro_use]
-extern crate serde_derive;
-extern crate log;
-extern crate simple_logger;
-extern crate rusoto_core;
-extern crate chrono;
-extern crate slack_hook;
-extern crate openssl_probe;
-
 use std::env;
 use std::error::Error;
 use std::str::FromStr;
 
 use chrono::{Duration, SecondsFormat, Utc};
+use lambda::lambda;
 use lambda::error::HandlerError;
 use rusoto_core::Region;
 use rusoto_cloudwatch::{
@@ -23,6 +13,7 @@ use rusoto_cloudwatch::{
     GetMetricStatisticsInput,
 };
 use rusoto_ssm::{Ssm, SsmClient, GetParameterRequest};
+use serde_derive::{Deserialize, Serialize};
 use slack_hook::{Slack, PayloadBuilder};
 
 #[derive(Deserialize, Clone)]
