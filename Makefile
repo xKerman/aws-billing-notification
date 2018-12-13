@@ -1,7 +1,6 @@
 AWS_REGION := ap-northeast-1
 AWS_CLOUDFORMATION_STACK_NAME := BillingNotificationStack
 AWS_S3_BUCKET := # pass from command line
-SLACK_WEBHOOK_URL := # pass from command line
 
 # see: https://postd.cc/auto-documented-makefile/
 .PHONY: help
