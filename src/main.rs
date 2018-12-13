@@ -12,6 +12,7 @@ extern crate openssl_probe;
 
 use std::env;
 use std::error::Error;
+use std::str::FromStr;
 
 use chrono::{Duration, SecondsFormat, Utc};
 use lambda::error::HandlerError;
@@ -22,6 +23,7 @@ use rusoto_cloudwatch::{
     Dimension,
     GetMetricStatisticsInput,
 };
+use rusoto_ssm::{Ssm, SsmClient, GetParameterRequest};
 use slack_hook::{Slack, PayloadBuilder};
 
 #[derive(Deserialize, Clone)]
@@ -101,10 +103,20 @@ fn my_handler(e: CustomEvent, c: lambda::Context) -> Result<CustomOutput, Handle
 }
 
 fn send_to_slack(c: &lambda::Context, total: f64) -> Result<(), HandlerError> {
-    let webhook_url = match env::var("SLACK_WEBHOOK_URL") {
-        Ok(url) => url,
+    let ssm_region = match env::var("AWS_SSM_REGION") {
+        Ok(region) => Region::from_str(region.as_str()).unwrap(),
         Err(err) => return Err(c.new_error(err.description())),
     };
+    let ssm = SsmClient::new(ssm_region);
+    let ssm_result = ssm.get_parameter(GetParameterRequest {
+        name: "/billing-notification/slack-webhook-url".to_string(),
+        with_decryption: Some(true),
+    });
+    let webhook_url = match ssm_result.sync() {
+        Err(err) => return Err(c.new_error(err.description())),
+        Ok(res) => res.parameter.map(|p| p.value.unwrap()).unwrap(),
+    };
+
     let slack = Slack::new(webhook_url.as_str()).unwrap();
     let payload = PayloadBuilder::new()
         .username("AWS Billing Notification")

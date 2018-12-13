@@ -1,9 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Parameters:
-  SlackWebhookUrl:
-    Type: String
-    Description: Incoming Webhook URL
 Resources:
   AwsBillingNotificationLambda:
     Type: AWS::Serverless::Function
@@ -18,7 +14,7 @@ Resources:
       Environment:
         Variables:
           RUST_BACKTRACE: 1
-          SLACK_WEBHOOK_URL: !Ref SlackWebhookUrl
+          AWS_SSM_REGION: !Sub '${AWS::Region}'
   AwsBillingNotificationIamRole:
     Type: AWS::IAM::Role
     Properties:
@@ -28,6 +24,16 @@ Resources:
           Effect: Allow
           Principal:
             Service: lambda.amazonaws.com
-          Action: sts:AssumeRole
+          Action:
+            - sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+      Policies:
+        - PolicyName: SsmParameterStoreAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              Effect: Allow
+              Action:
+                - 'ssm:GetParameter*'
+              Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/billing-notification/*'

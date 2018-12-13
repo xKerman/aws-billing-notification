@@ -1,4 +1,4 @@
-AWS_REGION := us-east-1
+AWS_REGION := ap-northeast-1
 AWS_CLOUDFORMATION_STACK_NAME := BillingNotificationStack
 AWS_S3_BUCKET := # pass from command line
 SLACK_WEBHOOK_URL := # pass from command line
@@ -27,6 +27,7 @@ clean: ## clean up build files
 
 .output.yml: template.yml target/rust.zip
 	aws cloudformation package \
+		--region $(AWS_REGION) \
 		--template-file template.yml \
 		--s3-bucket $(AWS_S3_BUCKET) \
 		--s3-prefix aws-billing-notification \
@@ -38,7 +39,7 @@ package: .output.yml ## create AWS Lambda package and upload it to S3
 .PHONY: deploy
 deploy: .output.yml target/rust.zip ## deploy code to AWS Lambda
 	aws cloudformation deploy \
+		--region $(AWS_REGION) \
 		--template-file .output.yml \
 		--stack-name $(AWS_CLOUDFORMATION_STACK_NAME) \
-		--capabilities CAPABILITY_IAM \
-		--parameter-overrides SlackWebhookUrl=$(SLACK_WEBHOOK_URL)
+		--capabilities CAPABILITY_IAM

@@ -43,6 +43,7 @@ dependencies = [
  "openssl-probe 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusoto_cloudwatch 0.35.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusoto_core 0.35.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rusoto_ssm 0.35.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.33 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1055,6 +1056,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "rusoto_ssm"
+version = "0.35.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rusoto_core 0.35.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.33 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1830,6 +1843,7 @@ dependencies = [
 "checksum rusoto_cloudwatch 0.35.0 (registry+https://github.com/rust-lang/crates.io-index)" = "b404453ac4c6da68ae37ed5e9da13561121b3654012b4695f48905bd87b831a9"
 "checksum rusoto_core 0.35.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9be4aac9e74cc9bc3401a77fe2bfe72bb603c2e4fcf7bf68ada89c2b0fd7049d"
 "checksum rusoto_credential 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9a331ddbb4cbc2f99464092cb3dcded64af9ea1e009f4ef719c9fa1130731992"
+"checksum rusoto_ssm 0.35.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ad8893fc522f0a85f169a304c992cf76090db3fc07ffe992c37c50e954cfdfd1"
 "checksum rustc-demangle 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)" = "bcfe5b13211b4d78e5c2cadfebd7769197d95c639c35a50057eb4c05de811395"
 "checksum rustc_version 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "138e3e0acb6c9fb258b19b67cb8abd63c00679d2851805ea151465464fe9030a"
 "checksum rustls 0.13.1 (registry+https://github.com/rust-lang/crates.io-index)" = "942b71057b31981152970d57399c25f72e27a6ee0d207a669d8304cabf44705b"
