@@ -3,26 +3,19 @@ use std::error::Error;
 use std::str::FromStr;
 
 use chrono::{Duration, SecondsFormat, Utc};
-use lambda::lambda;
 use lambda::error::HandlerError;
+use lambda::lambda;
+use rusoto_cloudwatch::{CloudWatch, CloudWatchClient, Dimension, GetMetricStatisticsInput};
 use rusoto_core::Region;
-use rusoto_cloudwatch::{
-    CloudWatch,
-    CloudWatchClient,
-    Dimension,
-    GetMetricStatisticsInput,
-};
-use rusoto_ssm::{Ssm, SsmClient, GetParameterRequest};
+use rusoto_ssm::{GetParameterRequest, Ssm, SsmClient};
 use serde_derive::{Deserialize, Serialize};
-use slack_hook::{Slack, PayloadBuilder};
+use slack_hook::{PayloadBuilder, Slack};
 
 #[derive(Deserialize, Clone)]
-struct CustomEvent {
-}
+struct CustomEvent {}
 
 #[derive(Serialize, Clone)]
-struct CustomOutput {
-}
+struct CustomOutput {}
 
 struct CloudWatchFacade {
     client: CloudWatchClient,
@@ -54,12 +47,15 @@ impl CloudWatchFacade {
 
         match metric.sync() {
             Err(err) => Err(c.new_error(&err.to_string())),
-            Ok(metric) => Ok(metric.datapoints.map(|dp| {
-                if dp.is_empty() {
-                    return 0.0;
-                }
-                return dp[0].maximum.unwrap_or(0.0);
-            }).unwrap_or(0.0)),
+            Ok(metric) => Ok(metric
+                .datapoints
+                .map(|dp| {
+                    if dp.is_empty() {
+                        return 0.0;
+                    }
+                    return dp[0].maximum.unwrap_or(0.0);
+                })
+                .unwrap_or(0.0)),
         }
     }
 }
@@ -71,7 +67,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
-
 
 fn my_handler(_e: CustomEvent, c: lambda::Context) -> Result<CustomOutput, HandlerError> {
     let client = CloudWatchFacade::new(CloudWatchClient::new(Region::UsEast1));
