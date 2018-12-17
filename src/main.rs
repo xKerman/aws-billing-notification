@@ -67,7 +67,7 @@ impl<'a> CloudWatchFacade<'a> {
                     if dp.is_empty() {
                         return 0.0;
                     }
-                    return dp[0].maximum.unwrap_or(0.0);
+                    dp[0].maximum.unwrap_or(0.0)
                 })
                 .unwrap_or(0.0)),
         }
@@ -87,10 +87,10 @@ impl<'a> CloudWatchFacade<'a> {
         match output.sync() {
             Err(err) => Err(self.context.new_error(err.description())),
             Ok(output) => {
-                let metrics = output.metrics.unwrap_or(vec![]);
+                let metrics = output.metrics.unwrap_or_default();
                 Ok(metrics
                     .iter()
-                    .flat_map(|m| m.clone().dimensions.unwrap_or(vec![]))
+                    .flat_map(|m| m.clone().dimensions.unwrap_or_default())
                     .filter_map(|d| {
                         if d.name == "ServiceName" {
                             return Some(d.value.clone());
@@ -136,7 +136,7 @@ impl<'a> CloudWatchFacade<'a> {
                         if dp.is_empty() {
                             return 0.0;
                         }
-                        return dp[0].maximum.unwrap_or(0.0);
+                        dp[0].maximum.unwrap_or(0.0)
                     })
                     .unwrap_or(0.0);
                 Ok(ServiceBilling {
@@ -156,6 +156,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn my_handler(_e: CustomEvent, c: lambda::Context) -> Result<CustomOutput, HandlerError> {
     let client = CloudWatchFacade::new(&c, CloudWatchClient::new(Region::UsEast1));
     let total = client.get_total_cost()?;
@@ -168,12 +169,12 @@ fn my_handler(_e: CustomEvent, c: lambda::Context) -> Result<CustomOutput, Handl
         total,
         services: costs,
     };
-    send_to_slack(&c, billing)?;
+    send_to_slack(&c, &billing)?;
 
     Ok(CustomOutput {})
 }
 
-fn send_to_slack(c: &lambda::Context, billing: Billing) -> Result<(), HandlerError> {
+fn send_to_slack(c: &lambda::Context, billing: &Billing) -> Result<(), HandlerError> {
     let ssm_region = match env::var("AWS_SSM_REGION") {
         Ok(region) => Region::from_str(region.as_str()).unwrap(),
         Err(err) => return Err(c.new_error(err.description())),
