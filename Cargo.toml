@@ -16,7 +16,7 @@ rusoto_core = "0.36.0"
 rusoto_cloudwatch = "0.36.0"
 rusoto_ssm = "0.36.0"
 chrono = "0.4"
-slack-hook = "0.7"
+slack-hook = "0.8"
 openssl-probe = "0.1.2"
 
 [[bin]]
