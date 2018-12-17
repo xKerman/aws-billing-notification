@@ -11,7 +11,7 @@ help: ## show help
 
 
 target/x86_64-unknown-linux-musl/release/bootstrap: src/main.rs Cargo.toml
-	docker run --rm -it -v $(PWD):/home/rust/src ekidd/rust-musl-builder cargo build --release --target x86_64-unknown-linux-musl
+	docker run --rm -i -v $(PWD):/home/rust/src ekidd/rust-musl-builder cargo build --release --target x86_64-unknown-linux-musl
 
 target/rust.zip: target/x86_64-unknown-linux-musl/release/bootstrap
 	zip -j $@ $^
