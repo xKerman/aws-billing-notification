@@ -15,6 +15,11 @@ Resources:
         Variables:
           RUST_BACKTRACE: 1
           AWS_SSM_REGION: !Sub '${AWS::Region}'
+      Events:
+        CronEvent:
+          Type: Schedule
+          Properties:
+            Schedule: 'cron(0 1 * * ? *)'
   AwsBillingNotificationIamRole:
     Type: AWS::IAM::Role
     Properties:
@@ -37,19 +42,3 @@ Resources:
               Action:
                 - 'ssm:GetParameter*'
               Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/billing-notification/*'
-
-  AwsBillingNotificationEventRule:
-    Type: AWS::Events::Rule
-    Properties:
-      ScheduleExpression: 'cron(0 1 * * ? *)'
-      State: ENABLED
-      Targets:
-        - Arn: !GetAtt AwsBillingNotificationLambda.Arn
-          Id: AwsBillingNotificationLambdaId
-  AwsBillingNotificationEventPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref AwsBillingNotificationLambda
-      Principal: events.amazonaws.com
-      SourceArn: !GetAtt AwsBillingNotificationEventRule.Arn
