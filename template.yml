@@ -32,6 +32,7 @@ Resources:
           Action:
             - sts:AssumeRole
       ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
       Policies:
         - PolicyName: SsmParameterStoreAccess
@@ -42,3 +43,8 @@ Resources:
               Action:
                 - 'ssm:GetParameter*'
               Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/billing-notification/*'
+  AwsBillingNotificationLog:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${AwsBillingNotificationLambda}
+      RetentionInDays: 30
