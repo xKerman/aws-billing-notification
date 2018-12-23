@@ -89,11 +89,11 @@ impl<'a> CloudWatchFacade<'a> {
             Ok(output) => {
                 let metrics = output.metrics.unwrap_or_default();
                 Ok(metrics
-                    .iter()
-                    .flat_map(|m| m.clone().dimensions.unwrap_or_default())
+                    .into_iter()
+                    .flat_map(|m| m.dimensions.unwrap_or_default())
                     .filter_map(|d| {
                         if d.name == "ServiceName" {
-                            return Some(d.value.clone());
+                            return Some(d.value);
                         }
                         None
                     })
@@ -169,12 +169,12 @@ fn my_handler(_e: CustomEvent, c: lambda::Context) -> Result<CustomOutput, Handl
         total,
         services: costs,
     };
-    send_to_slack(&c, &billing)?;
+    send_to_slack(&c, billing)?;
 
     Ok(CustomOutput {})
 }
 
-fn send_to_slack(c: &lambda::Context, billing: &Billing) -> Result<(), HandlerError> {
+fn send_to_slack(c: &lambda::Context, billing: Billing) -> Result<(), HandlerError> {
     let ssm_region = match env::var("AWS_SSM_REGION") {
         Ok(region) => Region::from_str(region.as_str()).unwrap(),
         Err(err) => return Err(c.new_error(err.description())),
@@ -193,14 +193,8 @@ fn send_to_slack(c: &lambda::Context, billing: &Billing) -> Result<(), HandlerEr
         .fields(
             billing
                 .services
-                .iter()
-                .map(|service| {
-                    Field::new(
-                        service.name.clone(),
-                        format!("${}", service.cost),
-                        Some(true),
-                    )
-                })
+                .into_iter()
+                .map(|service| Field::new(service.name, format!("${}", service.cost), Some(true)))
                 .collect(),
         )
         .build()
