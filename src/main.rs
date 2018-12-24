@@ -174,7 +174,7 @@ fn my_handler(_e: CustomEvent, c: lambda::Context) -> Result<CustomOutput, Handl
     Ok(CustomOutput {})
 }
 
-fn send_to_slack(c: &lambda::Context, billing: Billing) -> Result<(), HandlerError> {
+fn send_to_slack(c: &lambda::Context, mut billing: Billing) -> Result<(), HandlerError> {
     let ssm_region = match env::var("AWS_REGION") {
         Ok(region) => Region::from_str(region.as_str()).unwrap(),
         Err(err) => return Err(c.new_error(err.description())),
@@ -189,6 +189,7 @@ fn send_to_slack(c: &lambda::Context, billing: Billing) -> Result<(), HandlerErr
         Ok(res) => res.parameter.map(|p| p.value.unwrap()).unwrap(),
     };
 
+    billing.services.sort_unstable_by(|a, b| a.name.cmp(&b.name));
     let attachments = AttachmentBuilder::new("each service")
         .fields(
             billing
