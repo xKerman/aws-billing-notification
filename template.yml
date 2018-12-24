@@ -14,7 +14,6 @@ Resources:
       Environment:
         Variables:
           RUST_BACKTRACE: 1
-          AWS_SSM_REGION: !Sub '${AWS::Region}'
       Events:
         CronEvent:
           Type: Schedule

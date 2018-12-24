@@ -175,7 +175,7 @@ fn my_handler(_e: CustomEvent, c: lambda::Context) -> Result<CustomOutput, Handl
 }
 
 fn send_to_slack(c: &lambda::Context, billing: Billing) -> Result<(), HandlerError> {
-    let ssm_region = match env::var("AWS_SSM_REGION") {
+    let ssm_region = match env::var("AWS_REGION") {
         Ok(region) => Region::from_str(region.as_str()).unwrap(),
         Err(err) => return Err(c.new_error(err.description())),
     };
